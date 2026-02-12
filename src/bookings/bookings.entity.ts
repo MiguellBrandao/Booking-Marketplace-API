@@ -1,0 +1,71 @@
+import { Listings } from 'src/listings/listings.entity';
+import { Users } from 'src/users/user.entity';
+import {
+  Check,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+export enum BookingStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',
+  COMPLETED = 'completed',
+}
+
+@Entity('Bookings')
+@Check(`"startDate" < "endDate"`)
+@Check(`("status" != 'pending') OR ("expiresAt" IS NOT NULL)`)
+export class Bookings {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index()
+  @ManyToOne(() => Listings, (listing) => listing.bookings)
+  listing: Listings;
+
+  @Index()
+  @ManyToOne(() => Users, (user) => user.bookings)
+  guest: Users;
+
+  @Column()
+  startDate: Date;
+
+  @Column()
+  endDate: Date;
+
+  @Index()
+  @Column({
+    type: 'enum',
+    enum: BookingStatus,
+    default: BookingStatus.PENDING,
+  })
+  status: string;
+
+  @Column()
+  totalAmount: number;
+
+  @Column()
+  currency: string;
+
+  @Index()
+  @Column()
+  expiresAt: Date;
+
+  @Column({ nullable: true })
+  canceledAt: Date;
+
+  @Column({ nullable: true })
+  cancelReason: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
