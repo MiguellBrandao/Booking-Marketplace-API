@@ -18,6 +18,21 @@ export class AvailabilityBlockService {
     private listingService: ListingsService,
   ) {}
 
+  private async queryAvailabilityBlocks(
+    listingId: number,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const where: any = { listing: { id: listingId } };
+    if (startDate != null) where.startDate = startDate;
+    if (endDate != null) where.endDate = endDate;
+
+    return this.availabilityBlockService.find({
+      where,
+      relations: { listing: true },
+    });
+  }
+
   private async ensureNoOverlap(
     listingId: number,
     startDate: Date,
@@ -86,18 +101,23 @@ export class AvailabilityBlockService {
     startDate?: Date,
     endDate?: Date,
   ) {
-    const where: any = { listing: { id: listingId } };
-    if (startDate != null) where.startDate = startDate;
-    if (endDate != null) where.endDate = endDate;
-
-    const availabilityBlocks = await this.availabilityBlockService.find({
-      where,
-      relations: { listing: true },
-    });
+    const availabilityBlocks = await this.queryAvailabilityBlocks(
+      listingId,
+      startDate,
+      endDate,
+    );
     if (availabilityBlocks.length === 0)
       throw new NotFoundException('Availability Blocks not found');
 
     return availabilityBlocks;
+  }
+
+  async findAvailabilityBlocksForBooking(
+    listingId: number,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    return this.queryAvailabilityBlocks(listingId, startDate, endDate);
   }
 
   async deleteAvailabilityBlock(hostId: number, id: number) {

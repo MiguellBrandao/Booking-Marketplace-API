@@ -23,7 +23,9 @@ describe('BookingsService', () => {
     };
     const listingsServiceMock = { getListing: jest.fn() };
     const usersServiceMock = { findUser: jest.fn() };
-    const availabilityBlocksServiceMock = { findAvailabilityBlocks: jest.fn() };
+    const availabilityBlocksServiceMock = {
+      findAvailabilityBlocksForBooking: jest.fn(),
+    };
     const dataSourceMock = { createQueryRunner: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,7 +62,9 @@ describe('BookingsService', () => {
       pricePerNight: 100,
     } as never);
     usersService.findUser.mockResolvedValue({ id: 20 } as never);
-    availabilityBlocksService.findAvailabilityBlocks.mockResolvedValue([]);
+    availabilityBlocksService.findAvailabilityBlocksForBooking.mockResolvedValue(
+      [],
+    );
     bookingsRepository.create.mockImplementation((input) => input as Bookings);
     bookingsRepository.save.mockImplementation(async (input) => input as Bookings);
 

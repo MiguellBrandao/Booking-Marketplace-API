@@ -1,4 +1,12 @@
-import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  GoneException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bookings, BookingStatus } from './bookings.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -8,104 +16,142 @@ import { AvailabilityBlockService } from '../availabilityBlocks/availabilityBloc
 import { Listings } from '../listings/listings.entity';
 @Injectable()
 export class BookingsService {
-    constructor(@InjectRepository(Bookings) private bookingsRepository:Repository<Bookings>, private listingsService: ListingsService, private usersService: UsersService, private availabilityBlocksService: AvailabilityBlockService, private dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Bookings)
+    private bookingsRepository: Repository<Bookings>,
+    private listingsService: ListingsService,
+    private usersService: UsersService,
+    private availabilityBlocksService: AvailabilityBlockService,
+    private dataSource: DataSource,
+  ) {}
 
-    async createBooking(listingId: number, guestId: number, startDate: Date | string, endDate: Date | string, currency: string) {
-        const normalizedStartDate = new Date(startDate);
-        const normalizedEndDate = new Date(endDate);
-        const listing = await this.listingsService.getListing(listingId)
-        if (!listing) throw new NotFoundException('Listing not found')
+  private normalizeUtcDate(input: Date | string): Date {
+    const parsed = new Date(input);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException('Invalid booking dates');
+    }
+    return new Date(parsed.toISOString());
+  }
 
-        const guest = await this.usersService.findUser(guestId)
-        if (!guest) throw new UnauthorizedException()
+  async createBooking(
+    listingId: number,
+    guestId: number,
+    startDate: Date | string,
+    endDate: Date | string,
+    currency: string,
+  ) {
+    const normalizedStartDate = this.normalizeUtcDate(startDate);
+    const normalizedEndDate = this.normalizeUtcDate(endDate);
+    const listing = await this.listingsService.getListing(listingId);
+    if (!listing) throw new NotFoundException('Listing not found');
 
-        const blocks = await this.availabilityBlocksService.findAvailabilityBlocks(listing.id, normalizedStartDate, normalizedEndDate)
-        if (blocks.length > 0) throw new ConflictException('Listing is not available for the selected dates')
+    const guest = await this.usersService.findUser(guestId);
+    if (!guest) throw new UnauthorizedException();
 
-        const millisecondsPerNight = 24 * 60 * 60 * 1000
-        const nights = Math.ceil((normalizedEndDate.getTime() - normalizedStartDate.getTime()) / millisecondsPerNight)
-        if (nights <= 0) throw new BadRequestException('Invalid booking dates')
-        const totalAmount = nights * listing.pricePerNight
+    const blocks =
+      await this.availabilityBlocksService.findAvailabilityBlocksForBooking(
+        listing.id,
+        normalizedStartDate,
+        normalizedEndDate,
+      );
+    if (blocks.length > 0)
+      throw new ConflictException(
+        'Listing is not available for the selected dates',
+      );
 
-        const booking = this.bookingsRepository.create({
-            listing: { id: listingId },
-            guest: { id: guestId },
-            startDate: normalizedStartDate,
-            endDate: normalizedEndDate,
-            status: BookingStatus.PENDING,
-            totalAmount,
-            currency,
-            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        })
+    const millisecondsPerNight = 24 * 60 * 60 * 1000;
+    const nights = Math.ceil(
+      (normalizedEndDate.getTime() - normalizedStartDate.getTime()) /
+        millisecondsPerNight,
+    );
+    if (nights <= 0) throw new BadRequestException('Invalid booking dates');
+    const totalAmount = nights * listing.pricePerNight;
 
-        return await this.bookingsRepository.save(booking)
+    const booking = this.bookingsRepository.create({
+      listing: { id: listingId },
+      guest: { id: guestId },
+      startDate: normalizedStartDate,
+      endDate: normalizedEndDate,
+      status: BookingStatus.PENDING,
+      totalAmount,
+      currency,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    return await this.bookingsRepository.save(booking);
+  }
+
+  async confirmBooking(id: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const bookingRepo = queryRunner.manager.getRepository(Bookings);
+      const listingsRepo = queryRunner.manager.getRepository(Listings);
+
+      const booking = await bookingRepo
+        .createQueryBuilder('b')
+        .innerJoinAndSelect('b.listing', 'listing')
+        .where('b.id = :id', { id })
+        .setLock('pessimistic_write')
+        .getOne();
+
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (booking.status !== BookingStatus.PENDING)
+        throw new ConflictException('Invalid status');
+      if (booking.expiresAt < new Date())
+        throw new GoneException('Booking expired');
+
+      await listingsRepo
+        .createQueryBuilder('l')
+        .where('l.id = :listingId', { listingId: booking.listing.id })
+        .setLock('pessimistic_write')
+        .getOne();
+
+      const conflictCount = await bookingRepo
+        .createQueryBuilder('b')
+        .innerJoin('b.listing', 'l')
+        .where('l.id = :listingId', { listingId: booking.listing.id })
+        .andWhere('b.status = :status', { status: BookingStatus.CONFIRMED })
+        .andWhere('b.id != :bookingId', { bookingId: booking.id })
+        .andWhere('b.startDate < :endDate', { endDate: booking.endDate })
+        .andWhere('b.endDate > :startDate', { startDate: booking.startDate })
+        .getCount();
+
+      if (conflictCount > 0) {
+        throw new ConflictException('Overlapping confirmed booking exists');
+      }
+
+      booking.status = BookingStatus.CONFIRMED;
+      await bookingRepo.save(booking);
+
+      await queryRunner.commitTransaction();
+      return { ok: true };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async cancelBooking(id: number, guestId: number, reason: string) {
+    const booking = await this.bookingsRepository.findOne({
+      where: { id },
+      relations: { guest: true },
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.guest.id != guestId)
+      throw new ForbiddenException("You can't edit someone else's booking.");
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new ConflictException('Booking already cancelled');
     }
 
-    async confirmBooking(id: number) {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+    booking.status = BookingStatus.CANCELLED;
+    booking.canceledAt = new Date();
+    booking.cancelReason = reason ?? null;
 
-        try {
-            const bookingRepo = queryRunner.manager.getRepository(Bookings);
-            const listingsRepo = queryRunner.manager.getRepository(Listings);
-
-            const booking = await bookingRepo
-            .createQueryBuilder('b')
-            .innerJoinAndSelect('b.listing', 'listing')
-            .where('b.id = :id', { id })
-            .setLock('pessimistic_write')
-            .getOne();
-
-            if (!booking) throw new NotFoundException('Booking not found');
-            if (booking.status !== BookingStatus.PENDING) throw new ConflictException('Invalid status');
-            if (booking.expiresAt < new Date()) throw new GoneException('Booking expired');
-
-            await listingsRepo
-            .createQueryBuilder('l')
-            .where('l.id = :listingId', { listingId: booking.listing.id })
-            .setLock('pessimistic_write')
-            .getOne();
-
-            const conflictCount = await bookingRepo
-            .createQueryBuilder('b')
-            .innerJoin('b.listing', 'l')
-            .where('l.id = :listingId', { listingId: booking.listing.id })
-            .andWhere('b.status = :status', { status: BookingStatus.CONFIRMED })
-            .andWhere('b.id != :bookingId', { bookingId: booking.id })
-            .andWhere('b.startDate < :endDate', { endDate: booking.endDate })
-            .andWhere('b.endDate > :startDate', { startDate: booking.startDate })
-            .getCount();
-
-            if (conflictCount > 0) {
-                throw new ConflictException('Overlapping confirmed booking exists');
-            }
-
-            booking.status = BookingStatus.CONFIRMED;
-            await bookingRepo.save(booking);
-
-            await queryRunner.commitTransaction();
-            return { ok: true };
-        } catch (e) {
-            await queryRunner.rollbackTransaction();
-            throw e;
-        } finally {
-            await queryRunner.release();
-        }
-    }
-
-    async cancelBooking(id: number, guestId: number, reason: string) {
-        const booking = await this.bookingsRepository.findOne({ where: { id }, relations: { guest: true } })
-        if (!booking) throw new NotFoundException('Booking not found')
-        if (booking.guest.id != guestId) throw new ForbiddenException("You can't edit someone else's booking.")
-        if (booking.status === BookingStatus.CANCELLED) {
-            throw new ConflictException('Booking already cancelled');
-        }
-
-        booking.status = BookingStatus.CANCELLED;
-        booking.canceledAt = new Date();
-        booking.cancelReason = reason ?? null;
-
-        return this.bookingsRepository.save(booking)
-    }
+    return this.bookingsRepository.save(booking);
+  }
 }

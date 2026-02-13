@@ -19,6 +19,12 @@ export enum BookingStatus {
 }
 
 @Entity('Bookings')
+@Index('IDX_bookings_listing_status_period', [
+  'listing',
+  'status',
+  'startDate',
+  'endDate',
+])
 @Check(`"startDate" < "endDate"`)
 @Check(`("status"::text != 'pending') OR ("expiresAt" IS NOT NULL)`)
 export class Bookings {
@@ -33,10 +39,10 @@ export class Bookings {
   @ManyToOne(() => Users, (user) => user.bookings)
   guest: Users;
 
-  @Column()
+  @Column({ type: 'timestamptz' })
   startDate: Date;
 
-  @Column()
+  @Column({ type: 'timestamptz' })
   endDate: Date;
 
   @Index()
@@ -55,21 +61,21 @@ export class Bookings {
   currency: string;
 
   @Index()
-  @Column()
+  @Column({ type: 'timestamptz' })
   expiresAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   canceledAt: Date;
 
   @Column({ nullable: true })
   cancelReason: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   expiredAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

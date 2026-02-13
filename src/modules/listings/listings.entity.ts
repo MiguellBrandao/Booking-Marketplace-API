@@ -55,9 +55,9 @@ export class Listings {
   @OneToMany(() => Bookings, (booking) => booking.listing)
   bookings: Bookings[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

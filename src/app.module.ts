@@ -4,9 +4,11 @@ import { ListingsModule } from './modules/listings/listings.module';
 import { AvailabilityModule } from './modules/availabilityBlocks/availabilityBlocks.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { BullModule } from '@nestjs/bullmq';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -22,11 +24,15 @@ import { BullModule } from '@nestjs/bullmq';
         },
       }),
     }),
+    JwtModule.register({
+      global: true,
+    }),
     UsersModule,
     ListingsModule,
     AvailabilityModule,
     BookingsModule,
     AuthModule,
+    HealthModule,
     DatabaseModule,
   ],
   controllers: [],

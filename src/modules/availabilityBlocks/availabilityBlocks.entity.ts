@@ -18,16 +18,16 @@ export class AvailabilityBlocks {
   listing: Listings;
 
   @Index()
-  @Column()
+  @Column({ type: 'timestamptz' })
   startDate: Date;
 
   @Index()
-  @Column()
+  @Column({ type: 'timestamptz' })
   endDate: Date;
 
   @Column()
   reason: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
