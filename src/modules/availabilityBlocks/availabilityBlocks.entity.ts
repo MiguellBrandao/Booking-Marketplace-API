@@ -1,4 +1,4 @@
-import { Listings } from 'src/listings/listings.entity';
+import { Listings } from 'src/modules/listings/listings.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,14 +8,14 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('Availability')
-export class Availability {
+@Entity('AvailabilityBlocks')
+export class AvailabilityBlocks {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Index()
   @ManyToOne(() => Listings, (listing) => listing.id)
-  listingId: number;
+  listing: Listings;
 
   @Index()
   @Column()

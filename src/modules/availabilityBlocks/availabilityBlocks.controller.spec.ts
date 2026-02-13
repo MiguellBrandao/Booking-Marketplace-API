@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AvailabilityController } from './availability.controller';
+import { AvailabilityController } from './availabilityBlocks.controller';
 
-describe('AvailabilityController', () => {
+describe('AvailabilityBlockController', () => {
   let controller: AvailabilityController;
 
   beforeEach(async () => {

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AvailabilityService } from './availability.service';
+import { AvailabilityService } from './availabilityBlocks.service';
 
-describe('AvailabilityService', () => {
+describe('AvailabilityBlockService', () => {
   let service: AvailabilityService;
 
   beforeEach(async () => {

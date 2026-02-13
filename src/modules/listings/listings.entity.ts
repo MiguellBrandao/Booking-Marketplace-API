@@ -1,6 +1,6 @@
-import { Availability } from 'src/availability/availability.entity';
-import { Bookings } from 'src/bookings/bookings.entity';
-import { Users } from 'src/users/user.entity';
+import { AvailabilityBlocks } from 'src/modules/availabilityBlocks/availabilityBlocks.entity';
+import { Bookings } from 'src/modules/bookings/bookings.entity';
+import { Users } from 'src/modules/users/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -24,12 +24,12 @@ export class Listings {
 
   @Index()
   @ManyToOne(() => Users, (user) => user.id)
-  hostId: Users;
+  host: Users;
 
   @Column()
   title: string;
 
-  @Column()
+  @Column({ nullable: true})
   description: string;
 
   @Column()
@@ -49,8 +49,8 @@ export class Listings {
   })
   status: string;
 
-  @OneToMany(() => Availability, (availability) => availability.listingId)
-  availability: Availability[];
+  @OneToMany(() => AvailabilityBlocks, (availability) => availability.listing)
+  availability: AvailabilityBlocks[];
 
   @OneToMany(() => Bookings, (booking) => booking.listing)
   bookings: Bookings[];
