@@ -1,15 +1,24 @@
-import { IsDate, IsInt, IsString } from 'class-validator';
+import { IsDateString, IsInt, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookingDto {
+  @ApiProperty({
+    example: 1,
+    description:
+      'Listing ID. Nota: campo mantido como "lisitngId" para compatibilidade atual.',
+  })
   @IsInt()
-  lisitngId: number;
+  listingId: number;
 
-  @IsDate()
-  startDate: Date;
+  @ApiProperty({ example: '2026-02-20T14:00:00.000Z' })
+  @IsDateString()
+  startDate: string;
 
-  @IsDate()
-  endDate: Date;
+  @ApiProperty({ example: '2026-02-23T11:00:00.000Z' })
+  @IsDateString()
+  endDate: string;
 
+  @ApiProperty({ example: 'EUR' })
   @IsString()
   currency: string
 }

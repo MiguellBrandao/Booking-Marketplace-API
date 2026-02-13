@@ -3,11 +3,9 @@ import { UsersModule } from './modules/users/users.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { AvailabilityModule } from './modules/availabilityBlocks/availabilityBlocks.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
-import { PaymentsModule } from './modules/payments/payments.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
-import { JwtModule } from '@nestjs/jwt';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -28,10 +26,8 @@ import { BullModule } from '@nestjs/bullmq';
     ListingsModule,
     AvailabilityModule,
     BookingsModule,
-    PaymentsModule,
     AuthModule,
     DatabaseModule,
-    JwtModule.register({}),
   ],
   controllers: [],
 })

@@ -4,16 +4,36 @@ import { CreateBookingDto } from './dtos/create-booking.dto';
 import { ConfirmBookingDto } from './dtos/confirm-booking.dto';
 import { CancelBookingDto } from './dtos/cancel-booking.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @UseGuards(AuthGuard)
+@ApiTags('Bookings')
+@ApiBearerAuth()
 @Controller('bookings')
 export class BookingsController {
   constructor(private bookingsService: BookingsService) {}
 
   @Post('/')
+  @ApiOperation({ summary: 'Create a booking in PENDING status' })
+  @ApiBody({ type: CreateBookingDto })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 22,
+        status: 'pending',
+        expiresAt: '2026-02-20T14:15:00.000Z',
+      },
+    },
+  })
   createBooking(@Body() body: CreateBookingDto, @Request() request) {
     return this.bookingsService.createBooking(
-      body.lisitngId,
+      body.listingId,
       request.user.id,
       body.startDate,
       body.endDate,
@@ -22,11 +42,25 @@ export class BookingsController {
   }
 
   @Patch('confirm')
+  @ApiOperation({ summary: 'Confirm a pending booking' })
+  @ApiBody({ type: ConfirmBookingDto })
+  @ApiOkResponse({ schema: { example: { ok: true } } })
   confirmBooking(@Body() body: ConfirmBookingDto) {
     return this.bookingsService.confirmBooking(body.id);
   }
 
   @Patch('cancel')
+  @ApiOperation({ summary: 'Cancel a booking as the guest owner' })
+  @ApiBody({ type: CancelBookingDto })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 22,
+        status: 'cancelled',
+        cancelReason: 'Change of plans',
+      },
+    },
+  })
   cancelBooking(@Body() body: CancelBookingDto, @Request() request) {
     return this.bookingsService.cancelBooking(body.id, request.user.id, body.reason);
   }

@@ -4,15 +4,16 @@ import { AvailabilityBlockService } from './availabilityBlocks.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AvailabilityBlocks } from './availabilityBlocks.entity';
 import { ListingsModule } from '../listings/listings.module';
-import { JwtService } from '@nestjs/jwt';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AvailabilityBlocks]),
-    ListingsModule
+    ListingsModule,
+    AuthModule,
   ],
   controllers: [AvailabilityController],
-  providers: [ AvailabilityBlockService, JwtService],
+  providers: [ AvailabilityBlockService],
   exports: [AvailabilityBlockService],
 })
 export class AvailabilityModule {}

@@ -1,20 +1,33 @@
-import { IsInt, IsNumber, IsOptional, IsString } from "class-validator";
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class GetListingsDto {
+    @ApiPropertyOptional({ example: 'Lisbon' })
+    @IsOptional()
     @IsString()
-    city: string
+    city?: string
 
+    @ApiPropertyOptional({ example: '80' })
     @IsOptional()
-    @IsNumber()
-    minPrice: number
+    @IsNumberString()
+    minPrice?: string
 
+    @ApiPropertyOptional({ example: '250' })
     @IsOptional()
-    @IsNumber()
-    maxPrice: number
+    @IsNumberString()
+    maxPrice?: string
 
-    @IsInt()
-    page: number
+    @ApiPropertyOptional({ example: 1, default: 1 })
+    @IsOptional()
+    @IsNumberString()
+    page?: string
 
-    @IsInt()
-    limit: number
+    @ApiPropertyOptional({ example: 10, default: 10 })
+    @IsOptional()
+    @IsNumberString()
+    limit?: string
 }

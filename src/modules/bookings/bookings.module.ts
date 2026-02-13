@@ -6,11 +6,11 @@ import { Bookings } from './bookings.entity';
 import { UsersModule } from '../users/users.module';
 import { ListingsModule } from '../listings/listings.module';
 import { AvailabilityModule } from '../availabilityBlocks/availabilityBlocks.module';
-import { JwtService } from '@nestjs/jwt';
 import { BullModule } from '@nestjs/bullmq';
 import { BookingsJobsScheduler } from './bookings-jobs.scheduler';
 import { BookingsProcessor } from './bookings.processor';
 import { BookingsExpireService } from './bookings-expire.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +19,7 @@ import { BookingsExpireService } from './bookings-expire.service';
     UsersModule,
     ListingsModule,
     AvailabilityModule,
+    AuthModule,
   ],
   controllers: [BookingsController],
   providers: [
@@ -26,7 +27,6 @@ import { BookingsExpireService } from './bookings-expire.service';
     BookingsExpireService,
     BookingsJobsScheduler,
     BookingsProcessor,
-    JwtService,
   ],
 })
 export class BookingsModule {}

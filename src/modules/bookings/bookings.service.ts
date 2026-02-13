@@ -10,26 +10,28 @@ import { Listings } from '../listings/listings.entity';
 export class BookingsService {
     constructor(@InjectRepository(Bookings) private bookingsRepository:Repository<Bookings>, private listingsService: ListingsService, private usersService: UsersService, private availabilityBlocksService: AvailabilityBlockService, private dataSource: DataSource) {}
 
-    async createBooking(listingId: number, guestId: number, startDate: Date, endDate: Date, currency: string) {
+    async createBooking(listingId: number, guestId: number, startDate: Date | string, endDate: Date | string, currency: string) {
+        const normalizedStartDate = new Date(startDate);
+        const normalizedEndDate = new Date(endDate);
         const listing = await this.listingsService.getListing(listingId)
         if (!listing) throw new NotFoundException('Listing not found')
 
         const guest = await this.usersService.findUser(guestId)
         if (!guest) throw new UnauthorizedException()
 
-        const blocks = await this.availabilityBlocksService.findAvailabilityBlocks(listing.id, startDate, endDate)
+        const blocks = await this.availabilityBlocksService.findAvailabilityBlocks(listing.id, normalizedStartDate, normalizedEndDate)
         if (blocks.length > 0) throw new ConflictException('Listing is not available for the selected dates')
 
         const millisecondsPerNight = 24 * 60 * 60 * 1000
-        const nights = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / millisecondsPerNight)
+        const nights = Math.ceil((normalizedEndDate.getTime() - normalizedStartDate.getTime()) / millisecondsPerNight)
         if (nights <= 0) throw new BadRequestException('Invalid booking dates')
         const totalAmount = nights * listing.pricePerNight
 
         const booking = this.bookingsRepository.create({
             listing: { id: listingId },
             guest: { id: guestId },
-            startDate,
-            endDate,
+            startDate: normalizedStartDate,
+            endDate: normalizedEndDate,
             status: BookingStatus.PENDING,
             totalAmount,
             currency,
@@ -50,7 +52,7 @@ export class BookingsService {
 
             const booking = await bookingRepo
             .createQueryBuilder('b')
-            .leftJoinAndSelect('b.listing', 'listing')
+            .innerJoinAndSelect('b.listing', 'listing')
             .where('b.id = :id', { id })
             .setLock('pessimistic_write')
             .getOne();

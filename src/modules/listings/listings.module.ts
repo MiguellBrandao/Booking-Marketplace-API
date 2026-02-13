@@ -3,15 +3,12 @@ import { ListingsController } from './listings.controller';
 import { ListingsService } from './listings.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Listings } from './listings.entity';
-import { JwtService } from '@nestjs/jwt';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Listings])],
+  imports: [TypeOrmModule.forFeature([Listings]), AuthModule],
   controllers: [ListingsController],
-  providers: [
-    ListingsService,
-    JwtService
-  ],
+  providers: [ListingsService],
   exports: [ListingsService]
 })
 export class ListingsModule {}
