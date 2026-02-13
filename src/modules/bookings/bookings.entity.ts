@@ -15,12 +15,12 @@ export enum BookingStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   CANCELLED = 'cancelled',
-  COMPLETED = 'completed',
+  EXPIRED = 'expired',
 }
 
 @Entity('Bookings')
 @Check(`"startDate" < "endDate"`)
-@Check(`("status" != 'pending') OR ("expiresAt" IS NOT NULL)`)
+@Check(`("status"::text != 'pending') OR ("expiresAt" IS NOT NULL)`)
 export class Bookings {
   @PrimaryGeneratedColumn()
   id: number;
@@ -43,9 +43,10 @@ export class Bookings {
   @Column({
     type: 'enum',
     enum: BookingStatus,
+    enumName: 'bookings_status_enum',
     default: BookingStatus.PENDING,
   })
-  status: string;
+  status: BookingStatus;
 
   @Column()
   totalAmount: number;
@@ -62,6 +63,9 @@ export class Bookings {
 
   @Column({ nullable: true })
   cancelReason: string;
+
+  @Column({ nullable: true })
+  expiredAt: Date;
 
   @CreateDateColumn()
   createdAt: Date;

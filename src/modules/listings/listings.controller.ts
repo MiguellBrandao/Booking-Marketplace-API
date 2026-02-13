@@ -12,12 +12,17 @@ import { ListingDto } from './dtos/listing.dto';
 export class ListingsController {
     constructor(private listingsService: ListingsService) {}
 
-    @Get('/:id')
-    getListing(@Param('id') id: number, @Request() request) {
-        return this.listingsService.getListing(id, request.user.id)
+    @Get('/')
+    getListings() {
+
     }
 
-    @Get('/')
+    @Get('/:id')
+    getListing(@Param('id') id: number) {
+        return this.listingsService.getListing(id)
+    }
+
+    @Get('/my')
     getMyListings(@Request() request) {
         return this.listingsService.getListingsByHost(request.user.id)
     }

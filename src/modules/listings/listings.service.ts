@@ -7,12 +7,9 @@ import { Repository } from 'typeorm';
 export class ListingsService {
     constructor(@InjectRepository(Listings) private listingsRepository: Repository<Listings> ) {}
 
-    async getListing(id: number, hostId: number) {
-        console.log(id)
+    async getListing(id: number) {
         const listing = await this.listingsRepository.findOne({ where: { id }, relations: { host: true } })
         if (!listing) throw new NotFoundException('Listing not found')
-
-        if (listing.host.id != hostId) throw new ForbiddenException('You do not have access to this listing')
 
         return listing
     }

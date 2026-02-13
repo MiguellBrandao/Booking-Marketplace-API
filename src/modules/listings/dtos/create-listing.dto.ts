@@ -1,4 +1,5 @@
-import { IsInt, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsInt, IsNumber, IsOptional, IsString } from "class-validator";
+import { ListingStatus } from "../listings.entity";
 
 export class CreateListingDto {
     @IsString()
@@ -17,6 +18,6 @@ export class CreateListingDto {
     @IsString()
     currency: string;
 
-    @IsString()
+    @IsEnum(ListingStatus)
     status: string;
 }

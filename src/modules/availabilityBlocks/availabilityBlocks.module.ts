@@ -13,5 +13,6 @@ import { JwtService } from '@nestjs/jwt';
   ],
   controllers: [AvailabilityController],
   providers: [ AvailabilityBlockService, JwtService],
+  exports: [AvailabilityBlockService],
 })
 export class AvailabilityModule {}

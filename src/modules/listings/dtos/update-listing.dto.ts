@@ -1,4 +1,5 @@
-import { IsInt, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { ListingStatus } from "../listings.entity";
 
 export class UpdateListingDto {
     @IsOptional()
@@ -22,6 +23,6 @@ export class UpdateListingDto {
     currency: string;
 
     @IsOptional()
-    @IsString()
+    @IsEnum(ListingStatus)
     status: string;
 }

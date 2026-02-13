@@ -5,12 +5,25 @@ import { AvailabilityModule } from './modules/availabilityBlocks/availabilityBlo
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { JwtModule } from '@nestjs/jwt';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST') ?? 'localhost',
+          port: Number(configService.get<number>('REDIS_PORT') ?? 6379),
+        },
+      }),
+    }),
     UsersModule,
     ListingsModule,
     AvailabilityModule,
@@ -18,10 +31,7 @@ import { JwtModule } from '@nestjs/jwt';
     PaymentsModule,
     AuthModule,
     DatabaseModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    JwtModule.register({})
+    JwtModule.register({}),
   ],
   controllers: [],
 })

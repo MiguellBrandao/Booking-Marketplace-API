@@ -2,7 +2,6 @@ import { IsDateString, IsInt, IsNotEmpty, IsString, Min } from 'class-validator'
 
 export class CreateAvailabilityBlockDto {
     @IsInt()
-    @Min(1)
     listingId: number;
 
     @IsDateString()
