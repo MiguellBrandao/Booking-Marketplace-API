@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -41,6 +42,7 @@ export class ListingsService {
     }
 
     const [data, total] = await qb.getManyAndCount();
+    Logger.log(data);
     return {
       data,
       page,

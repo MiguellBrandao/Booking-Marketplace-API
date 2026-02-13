@@ -1,9 +1,18 @@
-import { Body, Controller, HttpCode, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dtos/create-booking.dto';
 import { ConfirmBookingDto } from './dtos/confirm-booking.dto';
 import { CancelBookingDto } from './dtos/cancel-booking.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -11,6 +20,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { BookingDto } from './dtos/booking.dto';
 
 @UseGuards(AuthGuard)
 @ApiTags('Bookings')
@@ -22,15 +32,8 @@ export class BookingsController {
   @Post('/')
   @ApiOperation({ summary: 'Create a booking in PENDING status' })
   @ApiBody({ type: CreateBookingDto })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        id: 22,
-        status: 'pending',
-        expiresAt: '2026-02-20T14:15:00.000Z',
-      },
-    },
-  })
+  @Serialize(BookingDto)
+  @ApiOkResponse({ type: BookingDto })
   createBooking(@Body() body: CreateBookingDto, @Request() request) {
     return this.bookingsService.createBooking(
       body.listingId,
@@ -52,16 +55,13 @@ export class BookingsController {
   @Patch('cancel')
   @ApiOperation({ summary: 'Cancel a booking as the guest owner' })
   @ApiBody({ type: CancelBookingDto })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        id: 22,
-        status: 'cancelled',
-        cancelReason: 'Change of plans',
-      },
-    },
-  })
+  @Serialize(BookingDto)
+  @ApiOkResponse({ type: BookingDto })
   cancelBooking(@Body() body: CancelBookingDto, @Request() request) {
-    return this.bookingsService.cancelBooking(body.id, request.user.id, body.reason);
+    return this.bookingsService.cancelBooking(
+      body.id,
+      request.user.id,
+      body.reason,
+    );
   }
 }
