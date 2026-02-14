@@ -72,16 +72,10 @@
           "name": "Refresh",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywibmFtZSI6Ik1pZ3VlbGxiIiwiaWF0IjoxNzcwOTI0ODg0LCJleHAiOjE3NzA5MjU3ODR9.9k-cRuMjgzzCNi5_X9t9GMY3bpBit8uxAcOBj1mlStg",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6Ik1pZ3VlbGxiIiwiaWF0IjoxNzcxMDA3MjQwLCJleHAiOjE3NzE2MTIwNDB9.QD8l7GwqePvG3Rxe6e3W_pLYnuRRKmUkJcr2_HRSMik\"\r\n}",
+              "raw": "{\r\n    \"refreshToken\": \"...\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
