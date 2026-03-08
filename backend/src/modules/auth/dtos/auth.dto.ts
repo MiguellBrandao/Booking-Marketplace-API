@@ -8,11 +8,4 @@ export class AuthDto {
   })
   @Expose()
   accessToken: string;
-
-  @ApiProperty({
-    example:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh-token-example',
-  })
-  @Expose()
-  refreshToken: string;
 }

@@ -97,8 +97,8 @@ describe('AuthService', () => {
   it('refresh fails on invalid token', async () => {
     jwtService.verifyAsync.mockRejectedValue(new Error('invalid token'));
 
-    await expect(
-      service.refresh({ refreshToken: 'invalid-token' }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.refresh('invalid-token')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 });

@@ -10,7 +10,7 @@
 
 ## Auth
 - `POST /auth/signup`
-  - body: `email`, `password`, `name`
+  - body: `email`, `password`, `name`a
   - resposta: `accessToken`, `refreshToken`
 - `POST /auth/signin`
   - body: `email`, `password`

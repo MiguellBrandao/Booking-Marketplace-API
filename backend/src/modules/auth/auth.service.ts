@@ -7,10 +7,8 @@ import {
 import { UsersService } from '../users/users.service';
 import { compareValue, hashValue } from 'src/utils/bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { AuthDto } from './dtos/auth.dto';
 import { SignUpDto } from './dtos/signup.dto';
 import { SignInDto } from './dtos/signin.dto';
-import { RefreshDto } from './dtos/refresh.dto';
 import { Users } from '../users/user.entity';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
@@ -18,6 +16,11 @@ import type { StringValue } from 'ms';
 interface TokensPayload {
   id: number;
   name: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable()
@@ -43,7 +46,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async signup({ email, password, name }: SignUpDto): Promise<AuthDto> {
+  async signup({ email, password, name }: SignUpDto): Promise<AuthTokens> {
     const existing = await this.userService.findUser(undefined, email);
     if (existing) throw new BadRequestException('Email already in use!');
     const user = await this.userService.createUser(email, password, name);
@@ -56,13 +59,10 @@ export class AuthService {
       await hashValue(refreshToken),
     );
 
-    return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    };
+    return { accessToken, refreshToken };
   }
 
-  async signin({ email, password }: SignInDto): Promise<AuthDto> {
+  async signin({ email, password }: SignInDto): Promise<AuthTokens> {
     const user = await this.userService.findUser(undefined, email);
 
     if (!user) throw new NotFoundException('User not found!');
@@ -82,13 +82,10 @@ export class AuthService {
       await hashValue(refreshToken),
     );
 
-    return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    };
+    return { accessToken, refreshToken };
   }
 
-  async refresh({ refreshToken }: RefreshDto) {
+  async refresh(refreshToken: string): Promise<AuthTokens> {
     if (!refreshToken) throw new UnauthorizedException('Invalid refresh token');
 
     let payload: any;
@@ -114,10 +111,7 @@ export class AuthService {
       await hashValue(generatedTokens.refreshToken),
     );
 
-    return {
-      accessToken: generatedTokens.accessToken,
-      refreshToken: generatedTokens.refreshToken,
-    };
+    return generatedTokens;
   }
 
   async logout(userId: number) {
