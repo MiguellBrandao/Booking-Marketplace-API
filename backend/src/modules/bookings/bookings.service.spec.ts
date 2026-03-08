@@ -20,6 +20,7 @@ describe('BookingsService', () => {
       create: jest.fn(),
       save: jest.fn(),
       findOne: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
     const listingsServiceMock = { getListing: jest.fn() };
     const usersServiceMock = { findUser: jest.fn() };
@@ -66,7 +67,7 @@ describe('BookingsService', () => {
       [],
     );
     bookingsRepository.create.mockImplementation((input) => input as Bookings);
-    bookingsRepository.save.mockImplementation(async (input) => input as Bookings);
+    bookingsRepository.save.mockImplementation((input) => input as Bookings);
 
     const result = await service.createBooking(
       10,
@@ -80,7 +81,32 @@ describe('BookingsService', () => {
     expect(result.totalAmount).toBe(200);
     expect(result.startDate).toBeInstanceOf(Date);
     expect(result.endDate).toBeInstanceOf(Date);
-    expect(bookingsRepository.save).toHaveBeenCalledTimes(1);
+    expect(bookingsRepository.save.mock.calls).toHaveLength(1);
+  });
+
+  it('lists bookings for host and applies search filter', async () => {
+    const qb = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([]),
+    };
+
+    bookingsRepository.createQueryBuilder.mockReturnValue(qb as never);
+
+    await service.getBookingsForHost(15, { search: 'john' });
+
+    expect(bookingsRepository.createQueryBuilder.mock.calls).toEqual([
+      ['booking'],
+    ]);
+    expect(qb.where.mock.calls).toEqual([
+      ['host.id = :hostId', { hostId: 15 }],
+    ]);
+    expect(qb.andWhere.mock.calls).toHaveLength(1);
+    expect(qb.getMany.mock.calls).toHaveLength(1);
   });
 
   it('throws not found when listing does not exist', async () => {

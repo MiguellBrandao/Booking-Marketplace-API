@@ -9,11 +9,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bookings, BookingStatus } from './bookings.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, Repository } from 'typeorm';
 import { ListingsService } from '../listings/listings.service';
 import { UsersService } from '../users/users.service';
 import { AvailabilityBlockService } from '../availabilityBlocks/availabilityBlocks.service';
 import { Listings } from '../listings/listings.entity';
+import { GetBookingsDto } from './dtos/get-bookings.dto';
 @Injectable()
 export class BookingsService {
   constructor(
@@ -31,6 +32,43 @@ export class BookingsService {
       throw new BadRequestException('Invalid booking dates');
     }
     return new Date(parsed.toISOString());
+  }
+
+  async getBookingsForHost(hostId: number, query: GetBookingsDto) {
+    const search = query.search?.trim();
+    const searchTerm = search ? `%${search}%` : undefined;
+    const searchAsNumber = search ? Number(search) : Number.NaN;
+
+    const qb = this.bookingsRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.listing', 'listing')
+      .innerJoin('listing.host', 'host')
+      .leftJoinAndSelect('booking.guest', 'guest')
+      .where('host.id = :hostId', { hostId })
+      .orderBy('booking.createdAt', 'DESC');
+
+    if (searchTerm) {
+      qb.andWhere(
+        new Brackets((subQuery) => {
+          subQuery
+            .where('guest.name ILIKE :searchTerm', { searchTerm })
+            .orWhere('guest.email ILIKE :searchTerm', { searchTerm })
+            .orWhere('listing.title ILIKE :searchTerm', { searchTerm })
+            .orWhere('listing.city ILIKE :searchTerm', { searchTerm })
+            .orWhere('CAST(booking.status AS text) ILIKE :searchTerm', {
+              searchTerm,
+            });
+
+          if (!Number.isNaN(searchAsNumber)) {
+            subQuery.orWhere('booking.id = :searchId', {
+              searchId: searchAsNumber,
+            });
+          }
+        }),
+      );
+    }
+
+    return qb.getMany();
   }
 
   async createBooking(

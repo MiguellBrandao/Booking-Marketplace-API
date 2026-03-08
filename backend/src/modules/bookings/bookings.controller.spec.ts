@@ -9,6 +9,7 @@ describe('BookingsController', () => {
 
   beforeEach(async () => {
     const bookingsServiceMock = {
+      getBookingsForHost: jest.fn(),
       createBooking: jest.fn(),
       confirmBooking: jest.fn(),
       cancelBooking: jest.fn(),
@@ -35,6 +36,16 @@ describe('BookingsController', () => {
 
     await controller.confirmBooking({ id: 99 });
 
-    expect(bookingsService.confirmBooking).toHaveBeenCalledWith(99);
+    expect(bookingsService.confirmBooking.mock.calls).toEqual([[99]]);
+  });
+
+  it('delegates host bookings listing to service', async () => {
+    bookingsService.getBookingsForHost.mockResolvedValue([] as never);
+
+    await controller.getBookings({ search: 'john' }, { user: { id: 7 } });
+
+    expect(bookingsService.getBookingsForHost.mock.calls).toEqual([
+      [7, { search: 'john' }],
+    ]);
   });
 });

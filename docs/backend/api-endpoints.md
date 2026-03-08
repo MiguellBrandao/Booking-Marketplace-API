@@ -41,6 +41,9 @@
 - `DELETE /availabilityblocks/:id`
 
 ## Bookings (todas protegidas por AuthGuard)
+- `GET /bookings/`
+  - visivel apenas para o owner dos listings
+  - query opcional: `search` (id do booking, status, nome/email do guest, titulo/cidade do listing)
 - `POST /bookings/`
   - body: `listingId`, `startDate`, `endDate`, `currency`
   - cria booking em `pending`
