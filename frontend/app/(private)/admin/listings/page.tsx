@@ -10,6 +10,7 @@ import {
 } from "@hugeicons/core-free-icons"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import { ModeToggle } from "@/components/mode-toggle"
 import {
   Card,
   CardContent,
@@ -44,21 +45,24 @@ export default function Page() {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-vertical:h-4 data-vertical:self-auto"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Listings
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+          <div className="flex w-full items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">
+                      Listings
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            <ModeToggle />
           </div>
         </header>
 
@@ -145,7 +149,8 @@ export default function Page() {
                   className="cursor-pointer border-border/70 transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <CardHeader>
-                    <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="line-clamp-1">{listing.title}</CardTitle>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${
                           listing.status === "active"
@@ -156,7 +161,6 @@ export default function Page() {
                         {listing.status}
                       </span>
                     </div>
-                    <CardTitle className="line-clamp-1">{listing.title}</CardTitle>
                     <CardDescription className="line-clamp-2">
                       {listing.description || "No description"}
                     </CardDescription>
