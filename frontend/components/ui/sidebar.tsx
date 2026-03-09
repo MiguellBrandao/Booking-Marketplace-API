@@ -32,6 +32,29 @@ const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
+function getSidebarOpenFromCookie() {
+  if (typeof document === "undefined") {
+    return null
+  }
+
+  const key = `${SIDEBAR_COOKIE_NAME}=`
+  const cookieValue = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(key))
+    ?.slice(key.length)
+
+  if (!cookieValue) {
+    return null
+  }
+
+  if (cookieValue === "true") return true
+  if (cookieValue === "false") return false
+  return null
+}
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect
+
 type SidebarContextProps = {
   state: "expanded" | "collapsed"
   open: boolean
@@ -72,6 +95,16 @@ function SidebarProvider({
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen)
+
+  useIsomorphicLayoutEffect(() => {
+    if (openProp !== undefined) return
+
+    const openFromCookie = getSidebarOpenFromCookie()
+    if (openFromCookie === null) return
+
+    _setOpen(openFromCookie)
+  }, [openProp])
+
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {

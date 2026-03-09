@@ -9,6 +9,11 @@ export type BookingGuestResponse = {
 export type BookingResponse = {
   id: number
   guest?: BookingGuestResponse
+  listing?: {
+    id: number
+    title: string
+    city: string
+  }
   startDate: string
   endDate: string
   status: "pending" | "confirmed" | "cancelled" | "expired"

@@ -19,7 +19,6 @@ import {
   DashboardSquare03Icon,
   Home03Icon,
   TaskDone02Icon,
-  Settings02Icon,
   Logout03Icon,
 } from "@hugeicons/core-free-icons"
 
@@ -95,11 +94,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Button
             type="button"
             variant="ghost"
-            className="w-full justify-start"
+            className="w-full justify-start group-data-[collapsible=icon]:justify-center"
             onClick={handleLogout}
           >
             <HugeiconsIcon icon={Logout03Icon} strokeWidth={2} />
-            <span>Logout</span>
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
           </Button>
         </div>
       </SidebarFooter>

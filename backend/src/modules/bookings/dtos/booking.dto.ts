@@ -15,6 +15,20 @@ class BookingGuestDto {
   name: string;
 }
 
+class BookingListingDto {
+  @ApiProperty({ example: 10 })
+  @Expose()
+  id: number;
+
+  @ApiProperty({ example: 'Cozy Apartment Downtown' })
+  @Expose()
+  title: string;
+
+  @ApiProperty({ example: 'Lisbon' })
+  @Expose()
+  city: string;
+}
+
 export class BookingDto {
   @ApiProperty({ example: 22 })
   @Expose()
@@ -24,6 +38,11 @@ export class BookingDto {
   @Expose()
   @Type(() => BookingGuestDto)
   guest?: BookingGuestDto;
+
+  @ApiPropertyOptional({ type: BookingListingDto })
+  @Expose()
+  @Type(() => BookingListingDto)
+  listing?: BookingListingDto;
 
   @ApiProperty({ example: '2026-08-10T00:00:00.000Z' })
   @Expose()

@@ -7,7 +7,6 @@ import {
   Calendar03Icon,
   Clock01Icon,
   RefreshIcon,
-  Search01Icon,
   TaskDone02Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons"
@@ -28,7 +27,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -65,14 +63,75 @@ const statusClasses: Record<string, string> = {
 }
 
 export default function Page() {
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [guestFilter, setGuestFilter] = useState("all")
+  const [listingFilter, setListingFilter] = useState("all")
 
-  const bookingsQuery = useBookings(search)
-  const bookings = bookingsQuery.data
+  const bookingsQuery = useBookings()
+  const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data])
+
+  const guestOptions = useMemo(() => {
+    const map = new Map<number, { id: number; label: string }>()
+
+    for (const booking of bookings) {
+      if (!booking.guest?.id) continue
+
+      if (!map.has(booking.guest.id)) {
+        const label = booking.guest.email
+          ? `${booking.guest.name} (${booking.guest.email})`
+          : booking.guest.name
+
+        map.set(booking.guest.id, {
+          id: booking.guest.id,
+          label,
+        })
+      }
+    }
+
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label))
+  }, [bookings])
+
+  const listingOptions = useMemo(() => {
+    const map = new Map<number, { id: number; label: string }>()
+
+    for (const booking of bookings) {
+      if (!booking.listing?.id) continue
+
+      if (!map.has(booking.listing.id)) {
+        const label = booking.listing.city
+          ? `${booking.listing.title} (${booking.listing.city})`
+          : booking.listing.title
+
+        map.set(booking.listing.id, {
+          id: booking.listing.id,
+          label,
+        })
+      }
+    }
+
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label))
+  }, [bookings])
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((booking) => {
+      if (statusFilter !== "all" && booking.status !== statusFilter) {
+        return false
+      }
+
+      if (guestFilter !== "all" && String(booking.guest?.id ?? "") !== guestFilter) {
+        return false
+      }
+
+      if (listingFilter !== "all" && String(booking.listing?.id ?? "") !== listingFilter) {
+        return false
+      }
+
+      return true
+    })
+  }, [bookings, statusFilter, guestFilter, listingFilter])
 
   const summary = useMemo(() => {
-    return (bookings ?? []).reduce(
+    return filteredBookings.reduce(
       (acc, booking) => {
         acc.total += 1
         if (booking.status === "pending") acc.pending += 1
@@ -89,16 +148,15 @@ export default function Page() {
         expired: 0,
       },
     )
-  }, [bookings])
+  }, [filteredBookings])
 
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setSearch(searchInput.trim())
-  }
+  const hasActiveFilters =
+    statusFilter !== "all" || guestFilter !== "all" || listingFilter !== "all"
 
-  function handleClearSearch() {
-    setSearchInput("")
-    setSearch("")
+  function handleClearFilters() {
+    setStatusFilter("all")
+    setGuestFilter("all")
+    setListingFilter("all")
   }
 
   return (
@@ -134,25 +192,53 @@ export default function Page() {
               </p>
             </div>
             <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
-              <form
-                onSubmit={handleSearchSubmit}
-                className="flex w-full items-center gap-2 md:w-[28rem]"
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="h-8 rounded-lg border border-input bg-background px-2 text-xs text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Filter by status"
               >
-                <Input
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Search by id, status, guest, listing..."
-                />
-                <Button type="submit" variant="outline">
-                  <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
-                  Search
-                </Button>
-              </form>
-              {search ? (
-                <Button type="button" variant="ghost" onClick={handleClearSearch}>
+                <option value="all">Status: All</option>
+                <option value="pending">Status: Pending</option>
+                <option value="confirmed">Status: Confirmed</option>
+                <option value="cancelled">Status: Cancelled</option>
+                <option value="expired">Status: Expired</option>
+              </select>
+
+              <select
+                value={guestFilter}
+                onChange={(event) => setGuestFilter(event.target.value)}
+                className="h-8 min-w-52 rounded-lg border border-input bg-background px-2 text-xs text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Filter by guest"
+              >
+                <option value="all">Guest: All</option>
+                {guestOptions.map((guest) => (
+                  <option key={guest.id} value={String(guest.id)}>
+                    {guest.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={listingFilter}
+                onChange={(event) => setListingFilter(event.target.value)}
+                className="h-8 min-w-52 rounded-lg border border-input bg-background px-2 text-xs text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Filter by listing"
+              >
+                <option value="all">Listing: All</option>
+                {listingOptions.map((listing) => (
+                  <option key={listing.id} value={String(listing.id)}>
+                    {listing.label}
+                  </option>
+                ))}
+              </select>
+
+              {hasActiveFilters ? (
+                <Button type="button" variant="ghost" onClick={handleClearFilters}>
                   Clear
                 </Button>
               ) : null}
+
               <Button
                 type="button"
                 variant="outline"
@@ -239,15 +325,15 @@ export default function Page() {
 
           {!bookingsQuery.isLoading &&
           !bookingsQuery.isError &&
-          (bookings?.length ?? 0) === 0 ? (
+          filteredBookings.length === 0 ? (
             <Card className="border-dashed">
               <CardHeader>
                 <CardTitle>
-                  {search ? "No results for this search" : "No bookings yet"}
+                  {hasActiveFilters ? "No results for current filters" : "No bookings yet"}
                 </CardTitle>
                 <CardDescription>
-                  {search
-                    ? "Try another term to find bookings."
+                  {hasActiveFilters
+                    ? "Try different filter combinations."
                     : "Bookings from your listings will appear here."}
                 </CardDescription>
               </CardHeader>
@@ -256,9 +342,9 @@ export default function Page() {
 
           {!bookingsQuery.isLoading &&
           !bookingsQuery.isError &&
-          (bookings?.length ?? 0) > 0 ? (
+          filteredBookings.length > 0 ? (
             <div className="space-y-3">
-              {bookings?.map((booking) => (
+              {filteredBookings.map((booking) => (
                 <Card key={booking.id} className="border-border/70">
                   <CardHeader className="gap-2">
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -267,6 +353,10 @@ export default function Page() {
                         <CardDescription>
                           Guest: {booking.guest?.name || "Unknown"}{" "}
                           {booking.guest?.email ? `(${booking.guest.email})` : ""}
+                        </CardDescription>
+                        <CardDescription>
+                          Listing: {booking.listing?.title || "Unknown"}{" "}
+                          {booking.listing?.city ? `(${booking.listing.city})` : ""}
                         </CardDescription>
                       </div>
                       <span
