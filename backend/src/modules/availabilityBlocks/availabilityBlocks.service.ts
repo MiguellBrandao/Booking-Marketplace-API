@@ -23,14 +23,19 @@ export class AvailabilityBlockService {
     startDate?: Date,
     endDate?: Date,
   ) {
-    const where: any = { listing: { id: listingId } };
-    if (startDate != null) where.startDate = startDate;
-    if (endDate != null) where.endDate = endDate;
+    const query = this.availabilityBlockService
+      .createQueryBuilder('ab')
+      .innerJoinAndSelect('ab.listing', 'listing')
+      .where('listing.id = :listingId', { listingId });
 
-    return this.availabilityBlockService.find({
-      where,
-      relations: { listing: true },
-    });
+    if (startDate != null) {
+      query.andWhere('ab.startDate = :startDate', { startDate });
+    }
+    if (endDate != null) {
+      query.andWhere('ab.endDate = :endDate', { endDate });
+    }
+
+    return query.getMany();
   }
 
   private async ensureNoOverlap(
@@ -117,7 +122,22 @@ export class AvailabilityBlockService {
     startDate?: Date,
     endDate?: Date,
   ) {
-    return this.queryAvailabilityBlocks(listingId, startDate, endDate);
+    const query = this.availabilityBlockService
+      .createQueryBuilder('ab')
+      .innerJoinAndSelect('ab.listing', 'listing')
+      .where('listing.id = :listingId', { listingId });
+
+    if (startDate && endDate) {
+      query
+        .andWhere('ab.startDate < :endDate', { endDate })
+        .andWhere('ab.endDate > :startDate', { startDate });
+    } else if (startDate) {
+      query.andWhere('ab.endDate > :startDate', { startDate });
+    } else if (endDate) {
+      query.andWhere('ab.startDate < :endDate', { endDate });
+    }
+
+    return query.getMany();
   }
 
   async deleteAvailabilityBlock(hostId: number, id: number) {

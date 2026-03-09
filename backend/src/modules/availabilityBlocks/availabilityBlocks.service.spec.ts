@@ -59,7 +59,13 @@ describe('AvailabilityBlockService', () => {
   });
 
   it('throws when no availability blocks are found', async () => {
-    repository.find.mockResolvedValue([]);
+    const qbMock = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([]),
+    };
+    repository.createQueryBuilder.mockReturnValue(qbMock as never);
 
     await expect(service.findAvailabilityBlocks(10)).rejects.toBeInstanceOf(
       NotFoundException,
@@ -88,5 +94,33 @@ describe('AvailabilityBlockService', () => {
         'Maintenance',
       ),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('queries overlapping blocks for booking date ranges', async () => {
+    const overlapStart = new Date('2026-04-11T00:00:00.000Z');
+    const overlapEnd = new Date('2026-04-12T00:00:00.000Z');
+    const qbMock = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([{ id: 1 }]),
+    };
+    repository.createQueryBuilder.mockReturnValue(qbMock as never);
+
+    const result = await service.findAvailabilityBlocksForBooking(
+      10,
+      overlapStart,
+      overlapEnd,
+    );
+
+    expect(repository.createQueryBuilder.mock.calls).toEqual([['ab']]);
+    expect(qbMock.where.mock.calls).toEqual([
+      ['listing.id = :listingId', { listingId: 10 }],
+    ]);
+    expect(qbMock.andWhere.mock.calls).toEqual([
+      ['ab.startDate < :endDate', { endDate: overlapEnd }],
+      ['ab.endDate > :startDate', { startDate: overlapStart }],
+    ]);
+    expect(result).toEqual([{ id: 1 }]);
   });
 });
