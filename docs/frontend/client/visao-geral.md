@@ -1,31 +1,28 @@
-# Visao Geral - Client Side
+# Client Frontend Overview
 
-## Objetivo
-Frontend publico para usuarios finais (host/guest) consumirem a plataforma.
+## Purpose
+This repository currently prioritizes the host/admin experience. The client-facing area is minimal and mostly limited to authentication entry points.
 
-## Escopo
-- home e descoberta de listings
-- detalhes do listing
-- fluxo de booking
-- area autenticada do usuario (meus bookings, meus listings)
-- configuracoes de conta
+## Current Scope
+- Public authentication pages (`login` and `signup`)
+- Global app shell (`layout.tsx`) with theme provider, tooltip provider, and React Query provider
+- Root route placeholder page (`/`)
+- Shared auth/session behavior used across the app
 
-## Rotas base
-- `app/(public)/`
-- `app/(public)/listings`
-- `app/(public)/listings/[id]`
-- `app/(public)/auth/login`
-- `app/(public)/auth/signup`
-- `app/(private)/my/bookings`
-- `app/(private)/my/listings`
-- `app/(private)/my/listings/new`
-- `app/(private)/my/listings/[id]/edit`
-- `app/(private)/account/profile`
+## Current Public Routes
+- `app/page.tsx`
+- `app/(public)/auth/login/page.tsx`
+- `app/(public)/auth/signup/page.tsx`
 
-## Stack
-- Next.js + App Router
+## Notes About Protected Routes
+- Protected routes exist under `app/(private)/*`, but they are currently admin-oriented (`/admin/*`) and listing-management focused.
+- Route access is controlled by `frontend/proxy.ts` using the refresh-token cookie.
+
+## Tech Stack
+- Next.js (App Router)
+- TypeScript
 - shadcn/ui
-- zod + react-hook-form
-- @tanstack/react-query
-- zustand
-- date-fns
+- React Query (`@tanstack/react-query`)
+- Zustand
+- React Hook Form + Standard Schema resolver
+- next-themes

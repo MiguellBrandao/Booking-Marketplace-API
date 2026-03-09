@@ -1,9 +1,9 @@
-# Modelo de Dados (estado atual do codigo)
+# Data Model (Current Code State)
 
-## Tabelas principais
+## Main Tables
 
 ### Users
-Campos:
+Fields:
 - `id` (PK, int)
 - `email` (unique)
 - `password`
@@ -11,14 +11,14 @@ Campos:
 - `hashedRefreshToken` (nullable)
 - `createdAt`, `updatedAt`
 
-Relacoes:
-- 1:N com `Listings` (`host`)
-- 1:N com `Bookings` (`guest`)
+Relations:
+- 1:N with `Listings` (`host`)
+- 1:N with `Bookings` (`guest`)
 
 ### Listings
-Campos:
+Fields:
 - `id` (PK, int)
-- `host` (FK para `Users`)
+- `host` (FK -> `Users`)
 - `title`
 - `description` (nullable)
 - `city`
@@ -27,57 +27,57 @@ Campos:
 - `status` (`active` | `inactive`)
 - `createdAt`, `updatedAt`
 
-Indices:
-- indice em `host`
-- indice em `status`
+Indexes:
+- index on `host`
+- index on `status`
 
-Relacoes:
-- 1:N com `AvailabilityBlocks`
-- 1:N com `Bookings`
+Relations:
+- 1:N with `AvailabilityBlocks`
+- 1:N with `Bookings`
 
 ### AvailabilityBlocks
-Campos:
+Fields:
 - `id` (PK, int)
-- `listing` (FK para `Listings`)
-- `startDate` (timestamptz)
-- `endDate` (timestamptz)
+- `listing` (FK -> `Listings`)
+- `startDate` (`timestamptz`)
+- `endDate` (`timestamptz`)
 - `reason`
 - `createdAt`
 
-Indices:
-- indice em `listing`
-- indice em `startDate`
-- indice em `endDate`
+Indexes:
+- index on `listing`
+- index on `startDate`
+- index on `endDate`
 
-Regra de negocio em service:
-- bloqueios nao podem sobrepor para o mesmo listing
+Service-level business rule:
+- blocks cannot overlap for the same listing
 
 ### Bookings
-Campos:
+Fields:
 - `id` (PK, int)
-- `listing` (FK para `Listings`)
-- `guest` (FK para `Users`)
-- `startDate` (timestamptz)
-- `endDate` (timestamptz)
+- `listing` (FK -> `Listings`)
+- `guest` (FK -> `Users`)
+- `startDate` (`timestamptz`)
+- `endDate` (`timestamptz`)
 - `status` (`pending` | `confirmed` | `cancelled` | `expired`)
 - `totalAmount`
 - `currency`
-- `expiresAt` (timestamptz)
+- `expiresAt` (`timestamptz`)
 - `canceledAt` (nullable)
 - `cancelReason` (nullable)
 - `expiredAt` (nullable)
 - `createdAt`, `updatedAt`
 
-Indices e constraints:
-- indice composto `IDX_bookings_listing_status_period` (`listing`, `status`, `startDate`, `endDate`)
-- indice em `listing`
-- indice em `guest`
-- indice em `status`
-- indice em `expiresAt`
-- check `startDate < endDate`
-- check: se `status = pending`, `expiresAt` deve estar preenchido
+Indexes and constraints:
+- composite index `IDX_bookings_listing_status_period` on (`listing`, `status`, `startDate`, `endDate`)
+- index on `listing`
+- index on `guest`
+- index on `status`
+- index on `expiresAt`
+- check constraint: `startDate < endDate`
+- check constraint: if `status = pending`, `expiresAt` must be present
 
-## Regras de consistencia
-- Overbooking prevenido na confirmacao via transacao + lock pessimista.
-- Expiracao de pendentes feita por job com update condicional por status/prazo.
-- Datas sao armazenadas em `timestamptz`.
+## Consistency Rules
+- Overbooking is prevented at confirmation time with transaction + pessimistic locking.
+- Pending expiration is handled by jobs with conditional status/time updates.
+- Dates are stored as `timestamptz`.

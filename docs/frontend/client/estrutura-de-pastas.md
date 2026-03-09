@@ -1,51 +1,45 @@
-# Estrutura de Pastas - Client Side
+# Client Frontend Folder Structure
 
 ```text
 frontend/
   app/
+    layout.tsx
+    page.tsx
     (public)/
-      page.tsx
-      listings/
-        page.tsx
-        [id]/page.tsx
       auth/
         login/page.tsx
         signup/page.tsx
     (private)/
-      my/
-        bookings/page.tsx
-        listings/
-          page.tsx
-          new/page.tsx
-          [id]/edit/page.tsx
-      account/
-        profile/page.tsx
+      admin/...
+      listings/[id]/page.tsx
 
   components/
-    public/
-    booking/
-    listing/
-    forms/
-    ui/
+    login-form.tsx
+    signup-form.tsx
+    theme-provider.tsx
+    mode-toggle.tsx
+    ui/*
 
   hooks/
-    use-public-listings.ts
-    use-my-bookings.ts
-    use-my-listings.ts
+    use-auth.ts
 
   lib/
     api/
-      public-listings.ts
-      bookings.ts
-      my-listings.ts
+      client.ts
       auth.ts
+    schemas/
+      auth.schema.ts
 
   stores/
     auth-store.ts
-    booking-flow-store.ts
+
+  providers/
+    react-query-provider.tsx
+
+  proxy.ts
 ```
 
-## Convencoes
-- rotas abertas em `app/(public)/*`
-- area autenticada em `app/(private)/*`
-- `auth` dentro de `(public)`
+## Conventions
+- Public access points are inside `app/(public)/*`.
+- Authentication state is managed with Zustand (`auth-store`) and refresh cookie checks.
+- The current protected app surface is admin-first; dedicated end-user client modules are not yet separated.

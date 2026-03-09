@@ -1,71 +1,103 @@
-# API Endpoints (estado atual do codigo)
+# API Endpoints (Current Code State)
 
-## Observacoes gerais
-- Base URL: sem prefixo global
+## General Notes
+- Base URL: no global prefix
 - Swagger: `GET /docs`
-- Autenticacao: Bearer token em rotas protegidas
+- Protected routes: Bearer token required
+- Refresh flow: refresh token is handled through an HTTP-only cookie
 
 ## Health
 - `GET /health`
 
 ## Auth
 - `POST /auth/signup`
-  - body: `email`, `password`, `name`a
-  - resposta: `accessToken`, `refreshToken`
+  - Body: `name`, `email`, `password`
+  - Response: `{ accessToken }`
+  - Side effect: sets refresh-token cookie
+
 - `POST /auth/signin`
-  - body: `email`, `password`
-  - resposta: `accessToken`, `refreshToken`
+  - Body: `email`, `password`
+  - Response: `{ accessToken }`
+  - Side effect: sets refresh-token cookie
+
 - `POST /auth/refresh`
-  - body: `refreshToken`
-  - resposta: novo `accessToken`, novo `refreshToken`
-- `POST /auth/logout` (protegido)
-  - resposta: `{ "ok": true }`
+  - Body: none
+  - Response: `{ accessToken }`
+  - Requirement: valid refresh-token cookie
+  - Side effect: rotates/refreshes refresh-token cookie
 
-## Listings (todas protegidas por AuthGuard)
-- `GET /listings/`
-  - query opcional: `city`, `minPrice`, `maxPrice`, `page`, `limit`
+- `POST /auth/logout` (protected)
+  - Response: `{ "ok": true }`
+  - Side effect: clears refresh-token cookie
+
+## Listings (all protected)
+- `GET /listings`
+  - Optional query: `city`, `minPrice`, `maxPrice`, `page`, `limit`
+  - Response: paginated object `{ data, page, limit, total, totalPages }`
+
 - `GET /listings/my`
+  - Response: array of listings owned by the authenticated host
+
 - `GET /listings/:id`
-- `POST /listings/`
-  - body: `title`, `description`, `city`, `pricePerNight`, `currency`, `status`
+  - Response: listing by id
+
+- `POST /listings`
+  - Body: `title`, `description`, `city`, `pricePerNight`, `currency`, `status`
+  - Response: created listing
+
 - `PATCH /listings/:id`
-  - body parcial com campos editaveis
+  - Body: partial listing fields
+  - Response: updated listing
 
-## Availability Blocks (todas protegidas por AuthGuard)
-- `GET /availabilityblocks/`
-  - query: `listingId` (obrigatorio), `startDate?`, `endDate?`
-- `POST /availabilityblocks/`
-  - body: `listingId`, `startDate`, `endDate`, `reason`
+## Availability Blocks (all protected)
+- `GET /availabilityblocks`
+  - Query: `listingId` (required), `startDate?`, `endDate?`
+  - Response: array of blocks
+
+- `POST /availabilityblocks`
+  - Body: `listingId`, `startDate`, `endDate`, `reason`
+  - Response: created block
+
 - `PATCH /availabilityblocks/:id`
-  - body parcial: `startDate?`, `endDate?`, `reason?`
+  - Body: `startDate?`, `endDate?`, `reason?`
+  - Response: updated block
+
 - `DELETE /availabilityblocks/:id`
+  - Response: `{ "ok": true }`
 
-## Bookings (todas protegidas por AuthGuard)
-- `GET /bookings/`
-  - visivel apenas para o owner dos listings
-  - query opcional: `search` (id do booking, status, nome/email do guest, titulo/cidade do listing)
-- `POST /bookings/`
-  - body: `listingId`, `startDate`, `endDate`, `currency`
-  - cria booking em `pending`
+## Bookings (all protected)
+- `GET /bookings`
+  - Visibility: only bookings from listings owned by the authenticated host
+  - Optional query: `search`
+  - Search fields: booking id, status, guest name/email, listing title/city
+  - Response: array of bookings
+
+- `POST /bookings`
+  - Body: `listingId`, `startDate`, `endDate`, `currency`
+  - Behavior: creates booking in `pending` status
+  - Response: created booking
+
 - `PATCH /bookings/confirm`
-  - body: `id`
-  - confirma booking com transacao + lock
-  - resposta: `{ "ok": true }`
+  - Body: `id`
+  - Behavior: confirms pending booking with transaction + pessimistic lock
+  - Response: `{ "ok": true }`
+
 - `PATCH /bookings/cancel`
-  - body: `id`, `reason?`
-  - cancela booking do proprio guest
+  - Body: `id`, `reason?`
+  - Behavior: cancels booking as the guest owner
+  - Response: updated booking
 
-## Erros de dominio comuns
-- `400`: payload invalido
-- `401`: token ausente/invalido
-- `403`: sem permissao
-- `404`: recurso nao encontrado
-- `409`: conflito de estado ou periodo
-- `410`: booking expirado na confirmacao
+## Common Domain Errors
+- `400`: invalid payload
+- `401`: missing/invalid authentication
+- `403`: permission denied
+- `404`: resource not found
+- `409`: state/date-range conflict
+- `410`: booking expired during confirmation
 
-## Validacao de concorrencia
-A confirmacao usa:
-1. lock pessimista no booking
-2. lock pessimista no listing
-3. checagem de overlap contra bookings `confirmed`
-4. commit apenas se nao houver conflito
+## Concurrency Validation in Booking Confirmation
+The confirmation flow uses:
+1. Pessimistic lock on booking row
+2. Pessimistic lock on listing row
+3. Overlap check against `confirmed` bookings
+4. Commit only if there is no conflict
