@@ -39,11 +39,6 @@ const navItems = [
     url: "/admin/bookings",
     icon: <HugeiconsIcon icon={TaskDone02Icon} strokeWidth={2} />,
   },
-  {
-    title: "Settings",
-    url: "/admin/settings/profile",
-    icon: <HugeiconsIcon icon={Settings02Icon} strokeWidth={2} />,
-  },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

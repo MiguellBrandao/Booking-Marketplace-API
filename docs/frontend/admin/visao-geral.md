@@ -9,7 +9,6 @@ Frontend interno para operacao da plataforma de reservas.
 - gestao de listings
 - gestao de availability blocks
 - acompanhamento e acao sobre bookings
-- pagina de health/diagnostico
 
 ## Rotas
 - `app/(public)/auth/login`
@@ -23,7 +22,6 @@ Frontend interno para operacao da plataforma de reservas.
 - `app/(private)/availability-blocks/[id]/edit`
 - `app/(private)/bookings`
 - `app/(private)/bookings/[id]`
-- `app/(private)/health`
 
 ## Stack
 - Next.js + App Router

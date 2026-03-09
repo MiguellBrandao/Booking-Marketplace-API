@@ -20,7 +20,6 @@ frontend/
       bookings/
         page.tsx
         [id]/page.tsx
-      health/page.tsx
 
   components/
     admin/
